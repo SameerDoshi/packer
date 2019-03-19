@@ -1,0 +1,73 @@
+{"variables": {
+    "client_id": "",
+    "client_secret": "",
+    "tenant_id": "",
+    "subscription_id": ""
+    
+  },
+  "builders": [{
+    "type": "azure-arm",
+    "client_id": "{{user `client_id`}}",
+    "client_secret": "{{user `client_secret`}}",
+    "tenant_id": "{{user `tenant_id`}}",
+    "subscription_id": "{{user `subscription_id`}}",
+    "managed_image_resource_group_name": "RG-Packer",
+    "managed_image_name": "ubuntu{{isotime \"2006-01-02\"}}",
+
+    "os_type": "Linux",
+    "image_publisher": "Canonical",
+    "image_offer": "UbuntuServer",
+    "image_sku": "16.04-LTS",
+
+    "azure_tags": {
+        "dept": "Engineering",
+        "task": "Image deployment"
+    },
+
+    "location": "East US",
+    "vm_size": "Standard_DS2_v2"
+  },
+  {
+    "type": "vsphere-iso",
+
+    "vcenter_server": "vcenter.domain.com",
+    "insecure_connection": "true",
+    "username": "administrator@vsphere.local",
+    "password": "secret",
+    "cluster": "cluster01",
+    "host": "esxi-1.domain.com",
+
+    "vm_name":  "ubuntu{{isotime \"2006-01-02\"}}",
+    "convert_to_template": "true",
+    "folder": "templates",
+    "cpu": "2",
+    "ram": "2048",
+    "network": "VM Network",
+    "network_adapter": "e1000",
+    "guest_os_type": "otherGuest",
+    "datastore": "ProdDatastore03",
+    "disk_size": "5GB",
+    "iso": "ISOS/CentOS7.iso",
+    "iso_datastore": "NFSDatastore01"
+
+  }
+],
+  "provisioners": [
+    {
+        "type": "file",
+        "source": "files/sample.txt",
+        "destination": "/var/tmp/sample.txt"
+      },
+      {
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+      "apt-get update",
+      "apt-get upgrade -y",
+      "apt-get -y install nginx",
+
+      "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  }]
+}
